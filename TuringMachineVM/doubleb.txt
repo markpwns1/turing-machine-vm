@@ -1,0 +1,36 @@
+﻿S,* -> A,*,r
+A,_ -> B,c,l
+A,* -> A,*,r
+
+B,a -> C,c,r
+C,* -> D,a,l
+D,* -> B,*,l
+
+B,b -> E,c,r
+E,* -> F,b,l
+F,* -> B,*,l
+
+B,c -> B,*,l
+
+B,_ -> G,*,r
+G,* -> H,*,r
+
+H,a -> I,c,l
+I,* -> J,a,r
+J,* -> H,*,r
+
+H,c -> K,*,r
+K,b -> L,c,l
+L,c -> M,b,r
+M,* -> H,*,r
+
+H,b -> N,*,r
+N,_ -> O,*,l
+N,* -> A,*,r
+
+H,_ -> P,*,l
+P,* -> ha,_,s
+
+O,c -> O,b,l
+O,_ -> ha,*,s
+O,* -> O,*,l

@@ -1,0 +1,7 @@
+*.zip
+.vs
+.vscode
+TuringMachineVM/bin
+TuringMachineVM/obj
+TuringMachineVMTest/bin
+TuringMachineVMTest/obj
