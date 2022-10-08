@@ -7,18 +7,6 @@ namespace TuringMachineVMTest
     [TestClass]
     public class InterpreterTest
     {
-        private struct ProgramState {
-            public char[] tape;
-            public long rwHead;
-            public State state;
-
-            public ProgramState(TuringMachine tm) {
-                tape = TuringMachine.CreateTape("", TAPE_SIZE);
-                rwHead = 0;
-                state = tm.InitialState;
-            }
-        }
-
         // Accepts even-length inputs and rejects odd-length inputs
         private const string ACCEPT_EVENS = @"
             S,_ -> E,*,r
@@ -63,12 +51,12 @@ namespace TuringMachineVMTest
 
         // Run a turing machine and assert that it accepts
         private void AssertAccepts(string source, string input, string alphabet) {
-            Assert.IsTrue(Run(source, input, alphabet).accepted, "Expected to accept");
+            Assert.IsTrue(Run(source, input, alphabet).Accepted, "Expected to accept");
         }
 
         // Run a turing machine and assert that it rejects
         private void AssertRejects(string source, string input, string alphabet) {
-            Assert.IsFalse(Run(source, input, alphabet).accepted, "Expected to reject");
+            Assert.IsFalse(Run(source, input, alphabet).Accepted, "Expected to reject");
         }
 
         [TestMethod]
@@ -114,10 +102,10 @@ namespace TuringMachineVMTest
             ", "");
             tm.Verify();
 
-            var state = new ProgramState(tm);
-            tm.Step(state.tape, ref state.rwHead, ref state.state);
+            var state = ExecutionState.Begin(tm, TAPE_SIZE);
+            tm.Step(state);
 
-            Assert.AreEqual(state.rwHead, 1);
+            Assert.AreEqual(state.ReadWriteHead, 1);
         }
 
         [TestMethod]
@@ -128,10 +116,10 @@ namespace TuringMachineVMTest
             ", "");
             tm.Verify();
 
-            var state = new ProgramState(tm) { rwHead = 1 };
-            tm.Step(state.tape, ref state.rwHead, ref state.state);
+            var state = ExecutionState.Begin(tm, TAPE_SIZE, 1);
+            tm.Step(state);
 
-            Assert.AreEqual(state.rwHead, 0);
+            Assert.AreEqual(state.ReadWriteHead, 0);
         }
 
         [TestMethod]
@@ -142,10 +130,10 @@ namespace TuringMachineVMTest
             ", "");
             tm.Verify();
 
-            var state = new ProgramState(tm);
-            tm.Step(state.tape, ref state.rwHead, ref state.state);
+            var state = ExecutionState.Begin(tm, TAPE_SIZE);
+            tm.Step(state);
 
-            Assert.AreEqual(state.rwHead, 0);
+            Assert.AreEqual(state.ReadWriteHead, 0);
         }
 
         [TestMethod]
@@ -153,10 +141,10 @@ namespace TuringMachineVMTest
             var tm = new TuringMachine("S,* -> ha,a,r", "a");
             tm.Verify();
 
-            var state = new ProgramState(tm);
-            tm.Step(state.tape, ref state.rwHead, ref state.state);
+            var state = ExecutionState.Begin(tm, TAPE_SIZE);
+            tm.Step(state);
 
-            Assert.AreEqual(state.tape[0], 'a');
+            Assert.AreEqual(state.Tape[0], 'a');
         }
 
         [TestMethod]
@@ -164,11 +152,10 @@ namespace TuringMachineVMTest
             var tm = new TuringMachine("S,* -> ha,*,r", "a");
             tm.Verify();
 
-            var state = new ProgramState(tm);
-            state.tape[0] = 'a';
-            tm.Step(state.tape, ref state.rwHead, ref state.state);
+            var state = ExecutionState.Begin(tm, TAPE_SIZE, "a", 1);
+            tm.Step(state);
 
-            Assert.AreEqual(state.tape[0], 'a');
+            Assert.AreEqual(state.Tape[1], 'a');
         }
 
         [TestMethod]
@@ -179,10 +166,10 @@ namespace TuringMachineVMTest
             ", "");
             tm.Verify();
 
-            var state = new ProgramState(tm);
-            tm.Step(state.tape, ref state.rwHead, ref state.state);
+            var state = ExecutionState.Begin(tm, TAPE_SIZE);
+            tm.Step(state);
 
-            Assert.AreEqual(state.state.name, "A");
+            Assert.AreEqual(state.State.name, "A");
         }
 
         // Recursive transition
@@ -193,10 +180,10 @@ namespace TuringMachineVMTest
             ", "");
             tm.Verify();
 
-            var state = new ProgramState(tm);
-            tm.Step(state.tape, ref state.rwHead, ref state.state);
+            var state = ExecutionState.Begin(tm, TAPE_SIZE);
+            tm.Step(state);
 
-            Assert.AreEqual(state.state.name, "S");
+            Assert.AreEqual(state.State.name, "S");
         }
     }
 }

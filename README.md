@@ -18,4 +18,15 @@ The static analysis performed ensures that the program conforms with the followi
 ## Refactors
 I'm not sure the best way to go about explaining these, so I'll just write some detailed information about each commit. These will be in order, and I will write them as I'm finishing the assignment, so consider them a kind of "log". My preferred way of writing code is making a branch for any kind of major change, so expect lots of branches and merges.
 
-- `commit 8b0502e83a9f7219632fada8c8f64489363cfc50` - Here I wrote some unit tests to prepare for the refactoring. Most of the unit tests had to do with the static analysis, and after writing some unit tests, I actually discovered some bugs with the original implementation and fixed those so that the tests pass. I still haven't written many tests running the actual VM though. This was not a refactoring, so most of the questions outlined in the assignment document do not apply.
+### Branch `unit-test`
+Here I created and checked out a new branch, `unit-test`
+
+- `commit 8b0502e83a9f7219632fada8c8f64489363cfc50` - Here I wrote some unit tests to prepare for the refactoring. Most of the unit tests had to do with the static analysis, and after writing some unit tests, I actually discovered some bugs with the original implementation and fixed those so that the tests pass. I still haven't written many tests running the actual VM though. This was not a refactoring, so most of the questions outlined in the assignment document do not apply. I did however, mostly fix bugs related to static analysis in `TuringMachine.cs`
+
+- `commit 68848604915229ccb1aa70acfae52570ed48774e` - I just finished the tests, specifically the part where you actually run the turing machine. I also had to add a way to run the turing machine one step at a time, so I moved out some code within `TuringMachine.Run` to `TuringMachine.Step`. I suppose this technically counts as the "long code" smell, which I fixed by extracting some of the method into a (very slightly) smaller method, but that wasn't really my intention. It was primarily to enable more effective unit testing, since this code would have to be used in two places: the `Run` function, and the unit tests, and I needed a way to isolate the body of the loop. So again, this does not really count as a refactoring, nor was it my intention, so forgive me for not writing half a page for this one.
+
+### Branch `master`
+Here I went back to the master branch for what I expected to be a few small changes.
+
+- `commit 
+

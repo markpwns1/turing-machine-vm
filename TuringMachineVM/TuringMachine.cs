@@ -8,27 +8,25 @@ namespace TuringMachineVM
     {
         public struct Result
         {
-            public readonly char[] tape;
-            public readonly long memPos;
-            public readonly bool accepted;
+            public ExecutionState FinalState { get; }
+            public bool Accepted { get; }
 
-            public Result(char[] tape, long memPos, bool accepted)
+            public Result(ExecutionState finalState, bool accepted)
             {
-                this.tape = tape;
-                this.memPos = memPos;
-                this.accepted = accepted;
+                FinalState = finalState;
+                Accepted = accepted;
             }
 
             public string DumpTape()
             {
-                return string.Join("", tape);
+                return string.Join("", FinalState.Tape);
             }
 
 
             public override string ToString()
             {
-                var str = TapeToString(tape, memPos);
-                str += "\n" + (accepted ? "Accepted" : "Rejected");
+                var str = TapeToString(FinalState);
+                str += "\n" + (Accepted ? "Accepted" : "Rejected");
                 return str;
             }
         }
@@ -104,12 +102,12 @@ namespace TuringMachineVM
             }
         }
 
-        public static string TapeToString(char[] tape, long memPos)
+        public static string TapeToString(ExecutionState state)
         {
-            long maxValue = Math.Max(0, Math.Min(memPos, tape.Length));
-            for (long i = maxValue; i < tape.Length; i++)
+            long maxValue = Math.Max(0, Math.Min(state.ReadWriteHead, state.Tape.Length));
+            for (long i = maxValue; i < state.Tape.Length; i++)
             {
-                if (tape[i] != '_')
+                if (state.Tape[i] != '_')
                 {
                     maxValue = i;
                 }
@@ -118,17 +116,17 @@ namespace TuringMachineVM
             string str = "";
             for (int i = 0; i <= maxValue; i++)
             {
-                str += tape[i];
+                str += state.Tape[i];
             }
 
             str += "\n";
 
-            for (int i = 0; i < memPos; i++)
+            for (int i = 0; i < state.ReadWriteHead; i++)
             {
                 str += " ";
             }
 
-            str += "^ [" + memPos + "]";
+            str += "^ [" + state.ReadWriteHead + "]";
 
             return str;
         }
@@ -214,60 +212,60 @@ namespace TuringMachineVM
 
         public Result Run(long memorySize)
         {
-            return Run(CreateTape("", memorySize), 0, states["S"]);
+            return Run(new ExecutionState(CreateTape("", memorySize), 0, states["S"]));
         }
 
         public Result Run(string tape, long tapeSize)
         {
-            return Run(CreateTape(tape, tapeSize), 0, states["S"]);
+            return Run(new ExecutionState(CreateTape(tape, tapeSize), 0, states["S"]));
         }
 
-        public Result? Step(char[] tape, ref long memPos, ref State current) {
-            var cell = tape[memPos];
+        public Result? Step(ExecutionState state) {
+            var cell = state.Tape[state.ReadWriteHead];
 
             State.Effect action;
 
-            if (current.transitions.ContainsKey(cell))
-                action = current.transitions[cell];
-            else if (current.transitions.ContainsKey('*'))
-                action = current.transitions['*'];
+            if (state.State.transitions.ContainsKey(cell))
+                action = state.State.transitions[cell];
+            else if (state.State.transitions.ContainsKey('*'))
+                action = state.State.transitions['*'];
             else
             {
-                throw new Exception(TapeToString(tape, memPos) + "\nNo transition in " + current.name + " for " + cell);
+                throw new Exception(TapeToString(state) + "\nNo transition in " + state.State.name + " for " + cell);
             }
 
             if(verbose)
             {
-                Console.WriteLine(TapeToString(tape, memPos) + "\n" + action.line + ". " + current.name + ", " + cell + " -> " + action.ToString());
+                Console.WriteLine(TapeToString(state) + "\n" + action.line + ". " + state.State.name + ", " + cell + " -> " + action.ToString());
             }
 
             if(action.write != '*')
-                tape[memPos] = action.write;
+                state.Tape[state.ReadWriteHead] = action.write;
 
-            memPos += (int)action.move;
+            state.MoveHead((int) action.move);
 
-            if (memPos < 0 || memPos >= tape.Length)
+            if (state.ReadWriteHead < 0 || state.ReadWriteHead >= state.Tape.Length)
             {
                 throw new Exception
-                    (TapeToString(tape, memPos)
-                    + "\n" + current.name + ", " + cell + " -> " + action.ToString() + 
+                    (TapeToString(state)
+                    + "\n" + state.State.name + ", " + cell + " -> " + action.ToString() + 
                     "\nWent out of bounds.");
             }
 
             if (action.next == ACCEPT || action.next == REJECT)
             {
-                return new Result(tape, memPos, action.next == ACCEPT);
+                return new Result(state, action.next == ACCEPT);
             }
-            else current = states[action.next];
+            else state.Transition(states[action.next]);
 
             return null;
         }
 
-        public Result Run(char[] tape, long memPos, State current)
+        public Result Run(ExecutionState state)
         {
             while(true)
             {
-                var result = Step(tape, ref memPos, ref current);
+                var result = Step(state);
                 if(result.HasValue) return result.Value;
             }
         }
