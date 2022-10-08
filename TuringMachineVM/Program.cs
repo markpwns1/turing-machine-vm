@@ -7,60 +7,74 @@ namespace TuringMachineVM
 {
     class Program
     {
-        static List<string> Parse(string command)
-        {
-            var tokens = new List<string>();
+        public const int DEFAULT_MEM_SIZE = 1024;
+        static List<Command> commands = new List<Command>() {
 
-            var i = 0;
-            string token = "";
-            bool stringMode = false;
+            new Command("load", 2, 2, "load <filename> <alphabet>", args => {
+                var source = Command.FileArgument(args[0]);
+                if(source == null) return;
 
-            while(i < command.Length)
-            {
-                var c = command[i];
-                if (stringMode)
-                {
-                    if(c == '"')
-                    {
-                        stringMode = false;
-                        tokens.Add(token);
-                        token = "";
-                    }
-                    else
-                    {
-                        token += c;
-                    }
+                try {
+                    TM = new TuringMachine(source, args[1]);
+                } catch(Exception e) {
+                    Console.WriteLine(e.Message);
                 }
-                else
-                {
-                    if(c == '"')
-                    {
-                        stringMode = true;
-                    }
-                    else if(char.IsWhiteSpace(command[i]))
-                    {
-                        if(token.Length > 0)
-                        {
-                            tokens.Add(token);
-                            token = "";
-                        }
-                    }
-                    else
-                    {
-                        token += command[i];
-                    }
+            }),
+
+            new Command("run", 0, 2, "run [tape contents] [memory size]", args => {
+                
+                if(TM == null) {
+                    Console.WriteLine("No Turing machine loaded");
+                    return;
                 }
 
-                i++;
-            }
+                if(args.Length < 1) {
+                    lastResult = TM.Run();
+                }
+                else if(args.Length < 2) {
+                    lastResult = TM.Run(args[0], DEFAULT_MEM_SIZE);
+                }
+                else {
+                    var memSize = Command.LongArgument(args[1], "memory size");
+                    if(memSize == -1) return;
+                    lastResult = TM.Run(args[0], memSize);
+                }
 
-            if (token.Length > 0)
-            {
-                tokens.Add(token);
-            }
+                Console.WriteLine(lastResult.Value.ToString());
+            }),
 
-            return tokens;
-        }
+            new Command("debug", 1, 1, "debug <on|off>", args => {
+                if(args[0] == "on") {
+                    TuringMachine.verbose = true;
+                }
+                else if(args[0] == "off") {
+                    TuringMachine.verbose = false;
+                }
+                else {
+                    Console.WriteLine("Usage: debug <on|off>");
+                }
+            }),
+
+            new Command("dump", 0, 0, "dump", args => {
+                if(TM == null) {
+                    Console.WriteLine("No program to dump");
+                    return;
+                }
+
+                Console.WriteLine(TM.ToString());
+            }),
+
+            new Command("help", 0, 0, "help", args => {
+                foreach(var command in commands)
+                {
+                    Console.WriteLine(command.Usage);
+                }
+            }),
+
+            new Command("exit", 0, 0, "exit", args => {
+                Environment.Exit(0);
+            })
+        };
 
         static TuringMachine TM = null;
         static TuringMachine.Result? lastResult = null;
@@ -79,7 +93,7 @@ namespace TuringMachineVM
                 for (int i = 1; i < args.Length; i++)
                 {
                     Console.WriteLine(">>> " + args[i]);
-                    ExecuteCommand(Parse(args[i]));
+                    Command.Dispatch(args[i], commands);
                 }
                 return;
             }
@@ -88,123 +102,8 @@ namespace TuringMachineVM
             {
                 Console.Write(">>> ");
                 var input = Console.ReadLine().Trim();
-                var segments = Parse(input);
-
-                ExecuteCommand(segments);
+                Command.Dispatch(input, commands);
             }
         }
-
-        private static void ExecuteCommand(List<string> segments)
-        {
-            if (segments[0].ToLower() == "load")
-            {
-                if (segments.Count < 3)
-                {
-                    Console.WriteLine("Usage: load <file> <alphabet>");
-                    return;
-                }
-
-                if (!File.Exists(segments[1]))
-                {
-                    Console.WriteLine("File not found: " + segments[1]);
-                    return;
-                }
-
-                try
-                {
-                    TM = new TuringMachine(File.ReadAllText(segments[1]), segments[2]);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.Message);
-                    return;
-                }
-            }
-            else if (segments[0].ToLower() == "run")
-            {
-                if (TM == null)
-                {
-                    Console.WriteLine("Load a program first");
-                    return;
-                }
-
-                try
-                {
-                    if (segments.Count < 2)
-                    {
-                        lastResult = TM.Run();
-                    }
-                    else if (segments.Count < 3)
-                    {
-                        lastResult = TM.Run(segments[1], 4096);
-                    }
-                    else
-                    {
-                        if (long.TryParse(segments[2], out long memsize))
-                        {
-                            lastResult = TM.Run(segments[1], memsize);
-                        }
-                        else
-                        {
-                            Console.WriteLine("Memory size must be a long");
-                            return;
-                        }
-                    }
-
-                    Console.WriteLine(lastResult.Value.ToString());
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.Message);
-                }
-            }
-            else if (segments[0].ToLower() == "debug")
-            {
-                if (TM == null)
-                {
-                    Console.WriteLine("Load a program first");
-                    return;
-                }
-
-                if (segments.Count < 2)
-                {
-                    Console.WriteLine("Usage: debug <on|off>");
-                    return;
-                }
-
-                if (segments[1].ToLower() == "on")
-                {
-                    TuringMachine.verbose = true;
-                }
-                else if (segments[1].ToLower() == "off")
-                {
-                    TuringMachine.verbose = false;
-                }
-                else
-                {
-                    Console.WriteLine("Usage: debug <on|off>");
-                    return;
-                }
-            }
-            else if (segments[0].ToLower() == "dump")
-            {
-                if (TM == null)
-                {
-                    Console.WriteLine("Load a program first");
-                    return;
-                }
-
-                Console.WriteLine(TM.ToString());
-            }
-            else if (segments[0].ToLower() == "quit")
-            {
-                Environment.Exit(0);
-            }
-            else
-            {
-                Console.WriteLine("Unknown command");
-            }
-        }
-
     }
 }
