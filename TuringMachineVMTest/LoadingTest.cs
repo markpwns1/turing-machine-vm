@@ -13,55 +13,50 @@ namespace TuringMachineVMTest
 
         [TestMethod]
         public void SyntaxError1() {
-            Assert.ThrowsException<Exception>(() => new TuringMachine("a", ""));
+            Assert.ThrowsException<ParsingException>(() => new TuringMachine("a", ""));
         }
 
         [TestMethod]
         public void SyntaxError2() {
             // 3 arguments on left side
-            Assert.ThrowsException<Exception>(() => new TuringMachine("S,*,a -> ha,*,s", ""));
+            Assert.ThrowsException<ParsingException>(() => new TuringMachine("S,*,a -> ha,*,s", ""));
         }
 
         [TestMethod]
         public void SyntaxError3() {
             // 4 arguments on right side
-            Assert.ThrowsException<Exception>(() => new TuringMachine("S,* -> ha,*,s,o", ""));
+            Assert.ThrowsException<ParsingException>(() => new TuringMachine("S,* -> ha,*,s,o", ""));
         }
 
         [TestMethod]
         public void SyntaxError4() {
-            Assert.ThrowsException<Exception>(() => new TuringMachine("a -> b", ""));
+            Assert.ThrowsException<ParsingException>(() => new TuringMachine("a -> b", ""));
         }
 
         [TestMethod]
         public void SyntaxError5() {
             // "q" is not a valid movement
-            Assert.ThrowsException<Exception>(() => new TuringMachine("S,* -> ha,*,q", ""));
+            Assert.ThrowsException<ParsingException>(() => new TuringMachine("S,* -> ha,*,q", ""));
         }
 
         [TestMethod]
-        public void SyntaxSuccess1() {
-            new TuringMachine("", "");
-        }
-
-        [TestMethod]
-        public void SyntaxSuccess2() {
+        public void SyntaxSuccess() {
             new TuringMachine("S,* -> ha,*,s", "");
         }
 
         [TestMethod]
         public void InvalidAlphabet1() {
-            Assert.ThrowsException<Exception>(() => new TuringMachine("S,* -> ha,a,s", ""));
+            Assert.ThrowsException<SemanticException>(() => new TuringMachine("S,* -> ha,a,s", ""));
         }
 
         [TestMethod]
         public void InvalidAlphabet2() {
-            Assert.ThrowsException<Exception>(() => new TuringMachine("S,* -> ha,a,s", "bc"));
+            Assert.ThrowsException<SemanticException>(() => new TuringMachine("S,* -> ha,a,s", "bc"));
         }
 
         [TestMethod]
         public void InvalidAlphabet3() {
-            Assert.ThrowsException<Exception>(() => new TuringMachine(@"
+            Assert.ThrowsException<SemanticException>(() => new TuringMachine(@"
                 S,a -> ha,*,s
                 S,* -> ha,*,s
             ", ""));
@@ -69,7 +64,7 @@ namespace TuringMachineVMTest
 
         [TestMethod]
         public void InvalidAlphabet4() {
-            Assert.ThrowsException<Exception>(() => new TuringMachine(@"
+            Assert.ThrowsException<SemanticException>(() => new TuringMachine(@"
                 S,a -> ha,*,s
                 S,* -> ha,*,s
             ", "bc"));
@@ -81,20 +76,20 @@ namespace TuringMachineVMTest
 
         [TestMethod]
         public void NoStartState() {
-            Assert.ThrowsException<Exception>(() => new TuringMachine("A,* -> ha,*,s", "").Verify());
+            Assert.ThrowsException<SemanticException>(() => new TuringMachine("A,* -> ha,*,s", ""));
         }
 
         [TestMethod]
         public void InvalidState()
         {
             // State A does not exist
-            Assert.ThrowsException<Exception>(() => new TuringMachine("S,* -> A,*,s", "").Verify());
+            Assert.ThrowsException<SemanticException>(() => new TuringMachine("S,* -> A,*,s", ""));
         }
 
         [TestMethod]
         public void IncompleteState() {
             // State S does not have a transition for input '_'
-            Assert.ThrowsException<Exception>(() => new TuringMachine("S,a -> ha,*,s", "a").Verify());
+            Assert.ThrowsException<SemanticException>(() => new TuringMachine("S,a -> ha,*,s", "a"));
         }
 
         [TestMethod]
@@ -102,12 +97,12 @@ namespace TuringMachineVMTest
             new TuringMachine(@"
                 S,a -> ha,*,s
                 S,_ -> ha,*,s
-            ", "a").Verify();
+            ", "a");
         }
 
         [TestMethod]
         public void CompleteState2() {
-            new TuringMachine("S,* -> ha,*,s", "abcefg").Verify();
+            new TuringMachine("S,* -> ha,*,s", "abcefg");
         }
 
         [TestMethod]
@@ -117,7 +112,7 @@ namespace TuringMachineVMTest
                 S,b -> hr,*,s
                 S,c -> hr,*,s
                 S,_ -> hr,*,s
-            ", "abc").Verify();
+            ", "abc");
         }
     }
 }

@@ -6,42 +6,8 @@ namespace TuringMachineVM
 {
     public class State
     {
-        public struct Effect
-        {
-            private static readonly Dictionary<Movement, string> MOVEMENTS_TO_STRING
-                = new Dictionary<Movement, string>()
-            {
-                { Movement.Left, "l" },
-                { Movement.Right, "r" },
-                { Movement.None, "s" },
-            };
-            public enum Movement
-            {
-                Left = -1,
-                None = 0,
-                Right = 1
-            }
-
-            public readonly char write;
-            public readonly string next;
-            public readonly Movement move;
-            public readonly int line;
-            public Effect(string next, char write, Movement move, int line)
-            {
-                this.next = next;
-                this.write = write;
-                this.move = move;
-                this.line = line;
-            }
-
-            public override string ToString()
-            {
-                return next + ", " + write + ", " + MOVEMENTS_TO_STRING[move];
-            }
-        }
-
         public string name;
-        public readonly Dictionary<char, Effect> transitions = new Dictionary<char, Effect>();
+        public readonly Dictionary<char, Transition> transitions = new Dictionary<char, Transition>();
 
         public State(string name)
         {
@@ -64,5 +30,35 @@ namespace TuringMachineVM
 
             return str;
         }
+
+        public static State FromString(Dictionary<string, State> states, string str, int line)
+        {
+            var badLeftHand = new ParsingException(line, "Invalid state format: " + str + ". Expected format <state>, <character> -> <next state>, <write>, <movement>");
+
+            var parts = str.Split("->");
+            
+            if (parts.Length != 2) throw badLeftHand;
+
+            var leftHand = parts[0].Trim().Split(",");
+
+            if (leftHand.Length != 2) throw badLeftHand;
+            
+            var stateName = leftHand[0].Trim();
+            var trigger = leftHand[1].Trim();
+
+            if (trigger.Length != 1) throw new ParsingException(line, "Invalid state format: " + str + ". Trigger must be a single character");
+
+            State state;
+            if (states.ContainsKey(stateName)) {
+                state = states[stateName];
+            } else {
+                state = new State(stateName);
+                states.Add(stateName, state);
+            }
+
+            state.transitions.Add(trigger[0], Transition.FromString(parts[1].Trim(), line));
+
+            return states[stateName];
+        } 
     }
 }

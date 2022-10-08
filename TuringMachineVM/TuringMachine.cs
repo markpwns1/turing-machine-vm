@@ -41,14 +41,6 @@ namespace TuringMachineVM
 
         public State InitialState { get; private set; }
 
-        private readonly Dictionary<string, State.Effect.Movement> movements
-            = new Dictionary<string, State.Effect.Movement>()
-        {
-            { "l", State.Effect.Movement.Left },
-            { "r", State.Effect.Movement.Right },
-            { "s", State.Effect.Movement.None },
-        };
-
         public static bool verbose = false;
 
         public TuringMachine(string source, IEnumerable<char> alphabet)
@@ -56,6 +48,13 @@ namespace TuringMachineVM
             this.alphabet = new List<char>() { '_' };
             this.alphabet.AddRange(alphabet);
 
+            Parse(source);
+
+            ValidateAlphabet();
+            ValidateStates();
+        }
+
+        private void Parse(string source) {
             var lines = source.Split("\n");
 
             var lineNo = 0;
@@ -64,41 +63,7 @@ namespace TuringMachineVM
                 lineNo++;
                 if (line.Trim() == "") continue;
 
-                var errorMsg = "Error on line " + lineNo + ": ";
-                var syntaxError = new Exception(errorMsg + "Rules must be in the form of <state>, <character> -> <next state>, <write>, <movement>");
-
-                var parts = line.Split("->");
-
-                if(parts.Length != 2)
-                    throw syntaxError;
-
-                var condition = parts[0].Split(",");
-                var effect = parts[1].Split(",");
-
-                if (condition.Length != 2 || effect.Length != 3)
-                    throw syntaxError;
-
-                var name = condition[0].Trim();
-                if (!states.ContainsKey(name))
-                    states.Add(name, new State(name));
-
-                var state = states[name];
-                var movementString = effect[2].Trim();
-
-                if(!movements.ContainsKey(movementString))
-                    throw new Exception(errorMsg + "Movement does not exist: " + movementString);
-
-                var toWrite = effect[1].Trim()[0];
-
-                if (toWrite != '*' && !this.alphabet.Contains(toWrite))
-                    throw new Exception(errorMsg + "Letter '" + toWrite + "' is not in the alphabet");
-
-                var trigger = condition[1].Trim()[0];
-
-                if (trigger != '*' && !this.alphabet.Contains(trigger))
-                    throw new Exception(errorMsg + "Letter '" + trigger + "' is not in the alphabet");
-
-                state.transitions[trigger] = new State.Effect(effect[0].Trim(), toWrite, movements[effect[2].Trim()], lineNo);
+                State.FromString(states, line, lineNo);
             }
         }
 
@@ -152,11 +117,8 @@ namespace TuringMachineVM
             return ToStringFrom(new List<string>(), "S");
         }
 
-        private void Verify(List<string> visited, string name)
+        private void ValidateStates(List<string> visited, string name)
         {
-            if (!states.ContainsKey(name))
-                throw new Exception("State " + name + " does not exist");
-
             var next = states[name];
 
             if (!next.transitions.ContainsKey('*'))
@@ -164,7 +126,7 @@ namespace TuringMachineVM
                 foreach (var letter in alphabet)
                 {
                     if(!next.transitions.ContainsKey(letter))
-                        throw new Exception("State " + name + " does not have a transition for letter " + letter);
+                        throw new SemanticException("State " + name + " does not have a transition for letter " + letter);
                 }
             }
 
@@ -172,21 +134,41 @@ namespace TuringMachineVM
 
             foreach(var effect in next.transitions.Values)
             {
-                if (!visited.Contains(effect.next) && effect.next != ACCEPT && effect.next != REJECT)
-                    Verify(visited, effect.next);
+                if (!visited.Contains(effect.next) && effect.next != ACCEPT && effect.next != REJECT) {
+                    if(!states.ContainsKey(effect.next))
+                        throw new SemanticException(effect.line, "State " + effect.next + " does not exist");
+
+                    ValidateStates(visited, effect.next);
+                }
             }
         }
 
-        public void Verify()
+        private void ValidateStates()
         {
             var visited = new List<string>();
 
             if (!states.ContainsKey("S"))
-                throw new Exception("VM does not contain a start state");
+                throw new SemanticException("VM does not contain a start state");
 
             InitialState = states["S"];
 
-            Verify(visited, "S");
+            ValidateStates(visited, "S");
+        }
+
+        private void ValidateAlphabet() {
+            foreach (var state in states.Values)
+            {
+                foreach (var trigger in state.transitions.Keys) {
+                    if (trigger != '*' && !alphabet.Contains(trigger))
+                        throw new SemanticException(state.transitions[trigger].line, "State " + state.name + " has a transition for letter " + trigger + " which is not in the alphabet");
+                }
+
+                foreach (var effect in state.transitions.Values)
+                {
+                    if (effect.write != '*' && !alphabet.Contains(effect.write))
+                        throw new SemanticException(effect.line, "State " + state.name + " writes " + effect.write + " which is not in the alphabet");
+                }
+            }
         }
 
         public static char[] CreateTape(string prefix, long size)
@@ -223,7 +205,7 @@ namespace TuringMachineVM
         public Result? Step(ExecutionState state) {
             var cell = state.Tape[state.ReadWriteHead];
 
-            State.Effect action;
+            Transition action;
 
             if (state.State.transitions.ContainsKey(cell))
                 action = state.State.transitions[cell];

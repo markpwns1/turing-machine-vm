@@ -9,7 +9,7 @@ namespace TuringMachineVMTest
     {
         // Accepts even-length inputs and rejects odd-length inputs
         private const string ACCEPT_EVENS = @"
-            S,_ -> E,*,r
+            S,* -> E,*,r
             E,_ -> ha,*,s
             E,* -> O,*,r
             O,_ -> hr,*,s
@@ -100,7 +100,6 @@ namespace TuringMachineVMTest
                 S,* -> A,*,r
                 A,_ -> ha,*,s
             ", "");
-            tm.Verify();
 
             var state = ExecutionState.Begin(tm, TAPE_SIZE);
             tm.Step(state);
@@ -114,7 +113,6 @@ namespace TuringMachineVMTest
                 S,* -> A,*,l
                 A,_ -> ha,*,s
             ", "");
-            tm.Verify();
 
             var state = ExecutionState.Begin(tm, TAPE_SIZE, 1);
             tm.Step(state);
@@ -128,7 +126,6 @@ namespace TuringMachineVMTest
                 S,* -> A,*,s
                 A,_ -> ha,*,s
             ", "");
-            tm.Verify();
 
             var state = ExecutionState.Begin(tm, TAPE_SIZE);
             tm.Step(state);
@@ -139,7 +136,6 @@ namespace TuringMachineVMTest
         [TestMethod]
         public void Write1() {
             var tm = new TuringMachine("S,* -> ha,a,r", "a");
-            tm.Verify();
 
             var state = ExecutionState.Begin(tm, TAPE_SIZE);
             tm.Step(state);
@@ -150,7 +146,6 @@ namespace TuringMachineVMTest
         [TestMethod]
         public void Write2() {
             var tm = new TuringMachine("S,* -> ha,*,r", "a");
-            tm.Verify();
 
             var state = ExecutionState.Begin(tm, TAPE_SIZE, "a", 1);
             tm.Step(state);
@@ -164,7 +159,6 @@ namespace TuringMachineVMTest
                 S,* -> A,*,r
                 A,_ -> ha,*,s
             ", "");
-            tm.Verify();
 
             var state = ExecutionState.Begin(tm, TAPE_SIZE);
             tm.Step(state);
@@ -178,7 +172,6 @@ namespace TuringMachineVMTest
             var tm = new TuringMachine(@"
                 S,* -> S,*,s
             ", "");
-            tm.Verify();
 
             var state = ExecutionState.Begin(tm, TAPE_SIZE);
             tm.Step(state);

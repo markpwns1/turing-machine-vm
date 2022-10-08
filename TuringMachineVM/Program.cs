@@ -113,7 +113,6 @@ namespace TuringMachineVM
                 try
                 {
                     TM = new TuringMachine(File.ReadAllText(segments[1]), segments[2]);
-                    TM.Verify();
                 }
                 catch (Exception e)
                 {
