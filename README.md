@@ -16,4 +16,6 @@ The static analysis performed ensures that the program conforms with the followi
 - A state may not write a letter that is not part of the alphabet
 
 ## Refactors
-I'm not sure the best way to go about explaining these, so I'll just write some detailed information about each commit.
+I'm not sure the best way to go about explaining these, so I'll just write some detailed information about each commit. These will be in order, and I will write them as I'm finishing the assignment, so consider them a kind of "log". My preferred way of writing code is making a branch for any kind of major change, so expect lots of branches and merges.
+
+- `commit 8b0502e83a9f7219632fada8c8f64489363cfc50` - Here I wrote some unit tests to prepare for the refactoring. Most of the unit tests had to do with the static analysis, and after writing some unit tests, I actually discovered some bugs with the original implementation and fixed those so that the tests pass. I still haven't written many tests running the actual VM though. This was not a refactoring, so most of the questions outlined in the assignment document do not apply.

@@ -41,6 +41,8 @@ namespace TuringMachineVM
         private readonly Dictionary<string, State> states = new Dictionary<string, State>();
         private readonly List<char> alphabet;
 
+        public State InitialState { get; private set; }
+
         private readonly Dictionary<string, State.Effect.Movement> movements
             = new Dictionary<string, State.Effect.Movement>()
         {
@@ -64,14 +66,19 @@ namespace TuringMachineVM
                 lineNo++;
                 if (line.Trim() == "") continue;
 
+                var errorMsg = "Error on line " + lineNo + ": ";
+                var syntaxError = new Exception(errorMsg + "Rules must be in the form of <state>, <character> -> <next state>, <write>, <movement>");
+
                 var parts = line.Split("->");
+
+                if(parts.Length != 2)
+                    throw syntaxError;
+
                 var condition = parts[0].Split(",");
                 var effect = parts[1].Split(",");
 
-                var errorMsg = "Error on line " + lineNo + ": ";
-
-                if (parts.Length != 2 || condition.Length != 2)
-                    throw new Exception(errorMsg + "Rules must be in the form of <state>, <character> -> <next state>, <write>, <movement>");
+                if (condition.Length != 2 || effect.Length != 3)
+                    throw syntaxError;
 
                 var name = condition[0].Trim();
                 if (!states.ContainsKey(name))
@@ -88,8 +95,12 @@ namespace TuringMachineVM
                 if (toWrite != '*' && !this.alphabet.Contains(toWrite))
                     throw new Exception(errorMsg + "Letter '" + toWrite + "' is not in the alphabet");
 
-                state.transitions[condition[1].Trim()[0]]
-                    = new State.Effect(effect[0].Trim(), toWrite, movements[effect[2].Trim()], lineNo);
+                var trigger = condition[1].Trim()[0];
+
+                if (trigger != '*' && !this.alphabet.Contains(trigger))
+                    throw new Exception(errorMsg + "Letter '" + trigger + "' is not in the alphabet");
+
+                state.transitions[trigger] = new State.Effect(effect[0].Trim(), toWrite, movements[effect[2].Trim()], lineNo);
             }
         }
 
@@ -152,10 +163,10 @@ namespace TuringMachineVM
 
             if (!next.transitions.ContainsKey('*'))
             {
-                foreach (var trigger in next.transitions.Keys)
+                foreach (var letter in alphabet)
                 {
-                    if(!alphabet.Contains(trigger))
-                        throw new Exception("State " + name + " does not cover the possibility of " + trigger);
+                    if(!next.transitions.ContainsKey(letter))
+                        throw new Exception("State " + name + " does not have a transition for letter " + letter);
                 }
             }
 
@@ -174,6 +185,8 @@ namespace TuringMachineVM
 
             if (!states.ContainsKey("S"))
                 throw new Exception("VM does not contain a start state");
+
+            InitialState = states["S"];
 
             Verify(visited, "S");
         }
@@ -209,46 +222,53 @@ namespace TuringMachineVM
             return Run(CreateTape(tape, tapeSize), 0, states["S"]);
         }
 
+        public Result? Step(char[] tape, ref long memPos, ref State current) {
+            var cell = tape[memPos];
+
+            State.Effect action;
+
+            if (current.transitions.ContainsKey(cell))
+                action = current.transitions[cell];
+            else if (current.transitions.ContainsKey('*'))
+                action = current.transitions['*'];
+            else
+            {
+                throw new Exception(TapeToString(tape, memPos) + "\nNo transition in " + current.name + " for " + cell);
+            }
+
+            if(verbose)
+            {
+                Console.WriteLine(TapeToString(tape, memPos) + "\n" + action.line + ". " + current.name + ", " + cell + " -> " + action.ToString());
+            }
+
+            if(action.write != '*')
+                tape[memPos] = action.write;
+
+            memPos += (int)action.move;
+
+            if (memPos < 0 || memPos >= tape.Length)
+            {
+                throw new Exception
+                    (TapeToString(tape, memPos)
+                    + "\n" + current.name + ", " + cell + " -> " + action.ToString() + 
+                    "\nWent out of bounds.");
+            }
+
+            if (action.next == ACCEPT || action.next == REJECT)
+            {
+                return new Result(tape, memPos, action.next == ACCEPT);
+            }
+            else current = states[action.next];
+
+            return null;
+        }
+
         public Result Run(char[] tape, long memPos, State current)
         {
             while(true)
             {
-                var cell = tape[memPos];
-
-                State.Effect action;
-
-                if (current.transitions.ContainsKey(cell))
-                    action = current.transitions[cell];
-                else if (current.transitions.ContainsKey('*'))
-                    action = current.transitions['*'];
-                else
-                {
-                    throw new Exception(TapeToString(tape, memPos) + "\nNo transition in " + current.name + " for " + cell);
-                }
-
-                if(verbose)
-                {
-                    Console.WriteLine(TapeToString(tape, memPos) + "\n" + action.line + ". " + current.name + ", " + cell + " -> " + action.ToString());
-                }
-
-                if(action.write != '*')
-                    tape[memPos] = action.write;
-
-                memPos += (int)action.move;
-
-                if (memPos < 0 || memPos >= tape.Length)
-                {
-                    throw new Exception
-                        (TapeToString(tape, memPos)
-                        + "\n" + current.name + ", " + cell + " -> " + action.ToString() + 
-                        "\nWent out of bounds.");
-                }
-
-                if (action.next == ACCEPT || action.next == REJECT)
-                {
-                    return new Result(tape, memPos, action.next == ACCEPT);
-                }
-                else current = states[action.next];
+                var result = Step(tape, ref memPos, ref current);
+                if(result.HasValue) return result.Value;
             }
         }
     }
