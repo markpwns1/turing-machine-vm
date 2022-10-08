@@ -15,6 +15,44 @@ The static analysis performed ensures that the program conforms with the followi
 - A state may not write a letter that is not part of the alphabet
 - A program must contain a starting state "S"
 
+### Example
+The following program runs with the alphabet `a`, and inserts an underscore between each letter.
+```
+S,* -> A,*,r
+A,_ -> L,*,l
+A,* -> A,*,r
+B,a -> C,_,r
+B,b -> F,_,r
+C,* -> D,a,l
+F,* -> D,b,l
+D,* -> G,*,l
+G,* -> H,*,l
+H,_ -> I,*,r
+H,* -> A,*,s
+I,* -> J,*,r
+J,* -> A,*,r
+E,_ -> A,*,r
+E,* -> E,*,l
+L,* -> M,*,l
+M,_ -> ha,*,s
+M,* -> B,*,r
+```
+
+### CLI
+
+The Turing Machine VM works a bit like a debugger, and upon starting the program, you are shown a prompt to type commands. The commands are as follows:
+- `load <filename> <alphabet>` - Loads a program at `filename` with a certain `alphabet`. Note that `_` is always implicitly part of the alphabet and need not be included.
+- `run [tape contents] [memory size]` - Runs the currently loaded program, filling the tape with `tape contents` starting at **position one**. Note that the read-write head starts at position 0. The tape's size will be equal to `memory size`. All these arguments are optional.
+- `debug <on|off>` - If `debug` is `on`, each step of running the Turing machine will be printed out. 
+- `dump` - Prints the currently loaded program, *not* including any unused branches.
+- `help` - Displays the in-program help message.
+- `exit` - Exits the program.
+
+From the command line, you can run `TuringMachineVM.exe [line1] [line2] ...` and it will automatically run each argument as though you wrote it yourself in the prompt.
+
+## Building
+Since it is a C# project (running .NET Core 3.1) it is recommended that you load the solution in Visual Studio and build it. Otherwise, you can run `msbuild.exe TuringMachineVM.sln`. Afterwards, you will find the binaries in `TuringMachineVM/bin/Debug/netcoreapp3.1/TuringMachineVM.exe`. If you create a release build, it will be in `TuringMachineVM/bin/Release/netcoreapp3.1/TuringMachineVM.exe`
+
 ## CPSC 501 Assignment 1 Report
 I'm not sure the best way to go about explaining these, so I'll just write some detailed information about each commit. These will be in order, and I will write them as I'm doing the assignment, so consider them a kind of "log". My preferred way of writing code is making a branch for any kind of major change, so expect lots of branches and merges.
 
@@ -68,4 +106,6 @@ I ended up expanding the test suite to cover commands (see `CLITest.cs`), as wel
 ### Branch `master`
 After that I switched back to master to make 2 small refactors
 
-- `commit ?` - For the 4th refactor, this time I identified two code smells, once again long class in `TuringMachine` that still needed trimming down, in combination with feature envy, given that `TuringMachine.TapeToString` operates on an `ExecutionState` and nothing else, but for some reason is inside `TuringMachine`. I also moved the `TuringMachine.Result` struct into its own file and renamed it to `ExecutionResult`. And finally, since `TuringMachine.CreateTape` deals with the tape, I also moved that into `ExecutionState`, where the rest of the tape operations are located. So I just performed "moved method" on them. Of course, I tested the code against my current test suite, and it passed first-try. The code is better structered after these refactors because now, finally, I believe `TuringMachine` now only contains code that deals with semantic analysis and execution of Turing machine programs. Classes should be focused on doing one thing very well, though, not two if you can help it, so this opens up the way for one last refactor: moving semantic analysis into its own class,
+- `commit 360c74e26fa4b46cbfbb28c5c1d88b0043773bc1` - For the 4th refactor, this time I identified two code smells, once again "long class" in `TuringMachine` that still needed trimming down, in combination with feature envy, given that `TuringMachine.TapeToString` operates on an `ExecutionState` and nothing else, but for some reason is inside `TuringMachine`. I also moved the `TuringMachine.Result` struct into its own file and renamed it to `ExecutionResult`, just because it was cluttering the file and didn't really need to be there. And finally, since `TuringMachine.CreateTape` deals with the tape, I also moved that into `ExecutionState`, where the rest of the tape operations are located, to solve another feature envy. So I just performed "move method" on the two methods and moved the `Result` struct myself. Of course, I tested the code against my current test suite, to ensure that everything still passes. The code is better structered after these refactors because now, finally, I believe `TuringMachine` now only contains code that deals with semantic analysis and execution of Turing machine programs. Classes should be focused on doing one thing very well, though, not two if you can help it, so this opens up the way for one last refactor: moving semantic analysis into its own class.
+
+- `commit ?` - For the final and smallest refactor, all I did was "extract class" on `TuringMachine.ValidateStates` and `TuringMachine.ValidateAlphabet` to move them into their own class, `TuringMachineValidation`. I also added a method `TuringMachineValidation.Validate` to combine the two functions into one, so you don't have to call them both seperately. Again, this is part of the ongoing, multiple-refactor-long effort to clear up the "long class" code smell in `TuringMachine`, and I believe that it's finally done. `TuringMachine` now deals solely with loading programs, running programs, and dumping loaded programs. This makes the code better structured by ensuring that each class does only one thing, which makes adding features and fixing bugs a lot easier, since you won't have to hop around all over the codebase for it. Needless to say, I tested the codebase against the existing test suite and the tests still pass. I personally can't see any obvious opportunity for further refactoring caused by this refactor.
