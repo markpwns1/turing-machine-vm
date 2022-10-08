@@ -1,8 +1,7 @@
-# CPSC 501 Assignment 1 
+# Turing Machine VM
 by Mark Kaldas
 
-## Context
-This is a Turing machine simulator, which uses the same syntax as a similar simulator used for my Introduction to Computability class a few years ago. It takes in a program and an alphabet, performs rigourous static analysis to detect bugs ahead of time, and then runs it. It takes in programs in the following format:
+This is a Turing machine simulator I wrote which uses the same syntax as a similar simulator used for my Introduction to Computability class a few years ago. It takes in a program and an alphabet, performs rigourous static analysis to detect bugs ahead of time, and then runs it. It takes in programs in the following format:
 ```
 state_name, current_letter -> next_state, letter_to_write, movement
 ```
@@ -16,7 +15,7 @@ The static analysis performed ensures that the program conforms with the followi
 - A state may not write a letter that is not part of the alphabet
 - A program must contain a starting state "S"
 
-## Refactors
+## CPSC 501 Assignment 1 Report
 I'm not sure the best way to go about explaining these, so I'll just write some detailed information about each commit. These will be in order, and I will write them as I'm doing the assignment, so consider them a kind of "log". My preferred way of writing code is making a branch for any kind of major change, so expect lots of branches and merges.
 
 ### Branch `unit-test`
@@ -45,7 +44,7 @@ As part of splitting parsing and semantic analysis, I also wrote some new classe
 ### Branch `cli-overhaul`
 After that I created a branch called `cli-overhaul` where I overhauled how commands were handled.
 
-#### `commit ?`
+#### `commit cf434c0aef48c0dfd619cb3e2d45d02cd1206eb7`
 
 Consider this the second "large" refactor. I noticed a horrible code smell, which was the fact that there was a giant method in `Program` that was just a giant if statement. This would count as a "switch statement" code smell according to Fowler (my if statement was pretty much equivalent to a switch statement). What I did to fix it was replace this statement with a list of `Command` objects, each one with a name, usage help string, minimum and maximum number of arguments, and a function that gets called whenever the command gets activated. Here is an example of one of the commands:
 
@@ -65,3 +64,8 @@ new Command("load", 2, 2, "load <filename> <alphabet>", args => {
 The program will then call `Command.Dispatch` which will automatically call a command given an input such a `load "abc.txt" "ab"`, and handle the cases where a command is not found, or there are too few or too many arguments. Furthermore, I "moved method" the command parsing code from `Program` to `Command`, because it was contributing to the "large class" code smell in `Program`. Note that I used a more functional programming-style approach to an object-oriented approach because I figured that if I made each command its own subclass of `Command`, it would clutter the filesystem, not be very appropriate since the commands aren't really different *types* of commands as much as different *instances* of the same kind of thing (a "command"). Also, in case it wasn't obvious, the entire `Command` class was the result of refactoring.
 
 I ended up expanding the test suite to cover commands (see `CLITest.cs`), as well as ensuring that all the existing tests still pass. The code is better structered now because there is no longer a giant method with several branches and depths of if statements, and it is much more readable this way, as well as much easier to add new commands. I think this has been refactored quite well, so I can't think of any other refactorings this might enable.
+
+### Branch `master`
+After that I switched back to master to make 2 small refactors
+
+- `commit ?` - For the 4th refactor, this time I identified two code smells, once again long class in `TuringMachine` that still needed trimming down, in combination with feature envy, given that `TuringMachine.TapeToString` operates on an `ExecutionState` and nothing else, but for some reason is inside `TuringMachine`. I also moved the `TuringMachine.Result` struct into its own file and renamed it to `ExecutionResult`. And finally, since `TuringMachine.CreateTape` deals with the tape, I also moved that into `ExecutionState`, where the rest of the tape operations are located. So I just performed "moved method" on them. Of course, I tested the code against my current test suite, and it passed first-try. The code is better structered after these refactors because now, finally, I believe `TuringMachine` now only contains code that deals with semantic analysis and execution of Turing machine programs. Classes should be focused on doing one thing very well, though, not two if you can help it, so this opens up the way for one last refactor: moving semantic analysis into its own class,

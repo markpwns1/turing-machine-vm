@@ -44,7 +44,7 @@ namespace TuringMachineVMTest
 
         // Run a turing machine with the following source code, input, and alphabet
         // and return the result
-        private TuringMachine.Result Run(string source, string input, string alphabet) {
+        private ExecutionResult Run(string source, string input, string alphabet) {
             var tm = new TuringMachine(source, alphabet);
             return tm.Run(input, TAPE_SIZE);
         }

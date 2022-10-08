@@ -77,7 +77,7 @@ namespace TuringMachineVM
         };
 
         static TuringMachine TM = null;
-        static TuringMachine.Result? lastResult = null;
+        static ExecutionResult? lastResult = null;
 
         static void Main(string[] args)
         {
