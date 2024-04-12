@@ -1,25 +1,30 @@
 
-public struct ExecutionResult
+namespace TuringMachineVM
 {
-    public ExecutionState FinalState { get; }
-    public bool Accepted { get; }
-
-    public ExecutionResult(ExecutionState finalState, bool accepted)
+    // Represents the result of a Turing Machine's complete, halting execution
+    public struct ExecutionResult
     {
-        FinalState = finalState;
-        Accepted = accepted;
-    }
+        public ExecutionState FinalState { get; } // The state of the machine after execution
+        public bool Accepted { get; } // Whether or not the input was accepted
 
-    public string DumpTape()
-    {
-        return string.Join("", FinalState.Tape);
-    }
+        public ExecutionResult(ExecutionState finalState, bool accepted)
+        {
+            FinalState = finalState;
+            Accepted = accepted;
+        }
 
+        // Dumps the tape to a string
+        public string DumpTape()
+        {
+            return string.Join("", FinalState.Tape);
+        }
 
-    public override string ToString()
-    {
-        var str = FinalState.TapeToString();
-        str += "\n" + (Accepted ? "Accepted" : "Rejected");
-        return str;
+        // Outputs the result of the execution, which is the final tape and whether or not the input was accepted
+        public override string ToString()
+        {
+            var str = FinalState.TapeToString();
+            str += "\n" + (Accepted ? "Accepted" : "Rejected");
+            return str;
+        }
     }
 }

@@ -4,6 +4,8 @@ using TuringMachineVM;
 
 namespace TuringMachineVMTest
 {
+    // Comprehensive tests for the Turing Machine interpreter
+
     [TestClass]
     public class InterpreterTest
     {

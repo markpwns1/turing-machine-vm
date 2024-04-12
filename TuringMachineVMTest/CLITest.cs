@@ -6,20 +6,22 @@ using TuringMachineVM;
 
 namespace TuringMachineVMTest
 {
+    // Various tests for the CLI
+
     [TestClass]
     public class CLITest
     {
         private static string buffer = "";
         public static List<Command> commands = new List<Command>() {
-            new Command("a", 0, 0, "a", args => {
+            new Command("a", 0, 0, "a", "a", args => {
                 buffer = "a";
             }),
 
-            new Command("b", 1, 1, "b <arg>", args => {
+            new Command("b", 1, 1, "b <arg>", "b", args => {
                 buffer = "b " + args[0];
             }),
 
-            new Command("c", 0, 2, "c [arg1] [arg2]", args => {
+            new Command("c", 0, 2, "c [arg1] [arg2]", "c", args => {
                 buffer = "c";
                 if(args.Length > 0) buffer += " " + args[0];
                 if(args.Length > 1) buffer += " " + args[1];

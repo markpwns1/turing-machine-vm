@@ -7,10 +7,13 @@ namespace TuringMachineVM
 {
     class Program
     {
+        // Tape size for all programs
         public const int DEFAULT_MEM_SIZE = 1024;
+
+        // List of commands. See their descriptions for what they do. The final argument is the code they run
         static List<Command> commands = new List<Command>() {
 
-            new Command("load", 2, 2, "load <filename> <alphabet>", args => {
+            new Command("load", 2, 2, "load <filename> <alphabet>", "loads a program to later be run or debugged", args => {
                 var source = Command.FileArgument(args[0]);
                 if(source == null) return;
 
@@ -21,7 +24,7 @@ namespace TuringMachineVM
                 }
             }),
 
-            new Command("run", 0, 2, "run [tape contents] [memory size]", args => {
+            new Command("run", 0, 2, "run [tape contents] [memory size]", "runs the currently loaded program", args => {
                 
                 if(TM == null) {
                     Console.WriteLine("No Turing machine loaded");
@@ -43,7 +46,7 @@ namespace TuringMachineVM
                 Console.WriteLine(lastResult.Value.ToString());
             }),
 
-            new Command("debug", 1, 1, "debug <on|off>", args => {
+            new Command("debug", 1, 1, "debug <on|off>", "toggles debug mode", args => {
                 if(args[0] == "on") {
                     TuringMachine.verbose = true;
                 }
@@ -55,7 +58,7 @@ namespace TuringMachineVM
                 }
             }),
 
-            new Command("dump", 0, 0, "dump", args => {
+            new Command("dump", 0, 0, "dump", "outputs the current program to a string", args => {
                 if(TM == null) {
                     Console.WriteLine("No program to dump");
                     return;
@@ -64,23 +67,26 @@ namespace TuringMachineVM
                 Console.WriteLine(TM.ToString());
             }),
 
-            new Command("help", 0, 0, "help", args => {
+            new Command("help", 0, 0, "help", "displays all the available commands", args => {
                 foreach(var command in commands)
                 {
-                    Console.WriteLine(command.Usage);
+                    Console.WriteLine(command.Usage + "\n  " + command.Description);
                 }
             }),
 
-            new Command("exit", 0, 0, "exit", args => {
+            new Command("exit", 0, 0, "exit", "exits this virtual machine", args => {
                 Environment.Exit(0);
             })
         };
 
+        // Current Turing machine and last execution result
         static TuringMachine TM = null;
         static ExecutionResult? lastResult = null;
 
+        // Entry point
         static void Main(string[] args)
         {
+            // The TMVM can be run with -c <command> arguments to automatically execute commands
             if(args.Length == 1)
             {
                 Console.WriteLine("Usage: tmvm [-c <command>+]");
@@ -88,6 +94,8 @@ namespace TuringMachineVM
             }
 
             Console.WriteLine("Turing Machine VM");
+
+            // Automatically execute the commands given as arguments
             if (args.Length > 1)
             {
                 for (int i = 1; i < args.Length; i++)
@@ -98,6 +106,7 @@ namespace TuringMachineVM
                 return;
             }
 
+            // REPL
             while(true)
             {
                 Console.Write(">>> ");

@@ -4,9 +4,12 @@ using System.Text;
 
 namespace TuringMachineVM
 {
+    // Represents a state in the Turing Machine
     public class State
     {
         public string name;
+
+        // Represents a state's list of <character encountered> -> <transition action>
         public readonly Dictionary<char, Transition> transitions = new Dictionary<char, Transition>();
 
         public State(string name)
@@ -14,11 +17,14 @@ namespace TuringMachineVM
             this.name = name;
         }
 
+        // Given a trigger character, outputs the part of this state containing the transition for it 
+        // For example: S, * -> ha, *, s
         public string ToString(char trigger)
         {
             return name + ", " + trigger + " -> " + transitions[trigger].ToString();
         }
 
+        // Returns the entire state and all its transitions in a string formatted as valid source code
         public override string ToString()
         {
             string str = "";
@@ -31,6 +37,9 @@ namespace TuringMachineVM
             return str;
         }
 
+        // Parses a line in the format of "name, trigger -> next_state, to_write, movement", adds the
+        // transition to the the state if it already exists (otherwise creates a new state), and returns
+        // the state
         public static State FromString(Dictionary<string, State> states, string str, int line)
         {
             var badLeftHand = new ParsingException(line, "Invalid state format: " + str + ". Expected format <state>, <character> -> <next state>, <write>, <movement>");
