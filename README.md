@@ -15,13 +15,14 @@ The static analysis performed ensures that the program conforms with the followi
 - A program must contain a starting state "S"
 
 ### Example
-The following program runs with the alphabet `a`, and inserts an underscore between each letter.
+The following program runs with the alphabet `ab`, takes in any string comprised of the letters `a` or `b`, and inserts an underscore between each letter.
 ```
 S,* -> A,*,r
 A,_ -> L,*,l
 A,* -> A,*,r
 B,a -> C,_,r
 B,b -> F,_,r
+B,_ -> hr,*,s
 C,* -> D,a,l
 F,* -> D,b,l
 D,* -> G,*,l
