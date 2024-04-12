@@ -38,6 +38,17 @@ M,_ -> ha,*,s
 M,* -> B,*,r
 ```
 
+And here's the output:
+```
+Turing Machine VM
+>>> load test.txt ab
+>>> run "abaabab"
+_a_b_a_a_b_a_b
+            ^ [12]
+Accepted
+>>>
+```
+
 ### CLI
 
 The Turing Machine VM works a bit like a debugger, and upon starting the program, you are shown a prompt to type commands. The commands are as follows:
