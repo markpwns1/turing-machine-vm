@@ -81,19 +81,19 @@ namespace TuringMachineVM
             return DumpProgram();
         }
 
-        // Runs the Turing Machine with a default memory size
+        // Runs the Turing Machine with a default memory size. Not guaranteed to terminate!
         public ExecutionResult Run()
         {
             return Run(DEFAULT_MEM_SIZE);
         }
 
-        // Runs the Turing Machine
+        // Runs the Turing Machine. Not guaranteed to terminate!
         public ExecutionResult Run(long memorySize)
         {
             return Run(new ExecutionState(ExecutionState.CreateTape("", memorySize), 0, States["S"]));
         }
 
-        // Runs the Turing Machine with a given tape
+        // Runs the Turing Machine with a given tape. Not guaranteed to terminate!
         public ExecutionResult Run(string tape, long tapeSize)
         {
             return Run(new ExecutionState(ExecutionState.CreateTape(tape, tapeSize), 0, States["S"]));
@@ -149,7 +149,8 @@ namespace TuringMachineVM
             return null;
         }
 
-        // (Dangerous!) Runs the Turing Machine until it terminates (which it might not)
+        // The base Run method, which runs a Turing Machine until (possible!) halt
+        // from a starting state. Again, NOT guaranteed to terminate!
         public ExecutionResult Run(ExecutionState state)
         {
             while(true)
