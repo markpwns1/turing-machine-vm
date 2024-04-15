@@ -39,19 +39,24 @@ namespace TuringMachineVM
             Action(args);
         }
 
-        // Parses a line in the terminal, properly obeying things like quotes
+        // Parses a line in the terminal, properly obeying things like quotes, and returns
+        // a list of tokens parsed
         public static List<string> ParseLine(string command)
         {
             var tokens = new List<string>();
 
+            string token = ""; // The current token being created
+
             var i = 0;
-            string token = "";
             bool stringMode = false;
 
-            // Standard tokenization loop, Google it if you're not familiar
+            // Standard tokenization loop
             while (i < command.Length)
             {
                 var c = command[i];
+
+                // In 'string mode', seek the next quotation mark and add everything until then
+                // to the string, verbatim
                 if (stringMode)
                 {
                     if (c == '"')
@@ -65,12 +70,14 @@ namespace TuringMachineVM
                         token += c;
                     }
                 }
-                else
+                else // Non-string mode
                 {
+                    // If a quotation mark is found, enable string mode
                     if (c == '"')
                     {
                         stringMode = true;
                     }
+                    // If whitespace is found, conclude the token
                     else if (char.IsWhiteSpace(command[i]))
                     {
                         if (token.Length > 0)
@@ -79,6 +86,7 @@ namespace TuringMachineVM
                             token = "";
                         }
                     }
+                    // Otherwise, add the current character to the token
                     else
                     {
                         token += command[i];
@@ -88,6 +96,7 @@ namespace TuringMachineVM
                 i++;
             }
 
+            // When parsing is finished, conclude the remaining token
             if (token.Length > 0)
             {
                 tokens.Add(token);
@@ -121,7 +130,8 @@ namespace TuringMachineVM
 
         // The following are utility functions meant to be used in the action of a Command
 
-        // Interprets an argument as a file and reads it
+        // Interprets an argument as a file and reads it, prints an error and returns null if
+        // there was a problem reading the file
         public static string FileArgument(string filename, string argName = "filename")
         {
             if (!File.Exists(filename))
@@ -133,7 +143,8 @@ namespace TuringMachineVM
             return File.ReadAllText(filename);
         }
 
-        // Interprets an argument as a long
+        // Interprets an argument as a long, prints an error and returns a sentinel value
+        // of -1 if the string could not be parsed
         public static long LongArgument(string arg, string argName)
         {
             long result;
